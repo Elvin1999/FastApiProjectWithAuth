@@ -41,7 +41,7 @@ def list_books(
     data["results"]=[BookOut.from_orm(b) for b in data["results"]]
     return data
 
-@router.patch('/{book_id}',response_model=BookOut,status_code=200)
+@router.patch('/{book_id}',response_model=BookOut,dependencies=[Depends(require_roles(Role.admin,Role.user))],status_code=200)
 def update_book(book_id:int,payload:BookCreate,db:Session=Depends(get_db)):
     b=db.query(Book).get(book_id)
     if b is None:
