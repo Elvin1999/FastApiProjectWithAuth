@@ -3,14 +3,14 @@ from fastapi import FastAPI, HTTPException, Query, Depends, APIRouter
 from typing import Optional,List
 from sqlalchemy.orm import Session
 
-from deps import get_db
+from deps import get_db, require_roles
 from helpers import paginate
-from models import Author, Book
+from models import Author, Book, Role
 from schemas import BookOut, BookCreate, AuthorOut, AuthorCreate
 
 router=APIRouter(prefix="/api/authors",tags=["authors"])
 
-@router.post('/api/authors',response_model=AuthorOut,status_code=201)
+@router.post('/',response_model=AuthorOut,dependencies=[Depends(require_roles(Role.admin,Role.user))],status_code=201)
 def create_author(payload:AuthorCreate,db:Session=Depends(get_db)):
     if db.query(Author).filter_by(name=payload.name).first() is not None:
         raise HTTPException(status_code=400,detail='Author already exists')
@@ -20,7 +20,7 @@ def create_author(payload:AuthorCreate,db:Session=Depends(get_db)):
     db.refresh(author)
     return author
 
-@router.get('/api/authors',response_model=dict,status_code=200)
+@router.get('/',response_model=dict,status_code=200)
 def list_authors(
         q:Optional[str]=Query(None),
         order:str=Query("name"),
@@ -39,14 +39,14 @@ def list_authors(
     data["results"]=[AuthorOut.from_orm(a) for a in data["results"]]
     return data
 
-@router.get('/api/authors/{author_id}',response_model=AuthorOut,status_code=200)
+@router.get('/{author_id}',response_model=AuthorOut,status_code=200)
 def get_author(author_id:int,db:Session=Depends(get_db)):
     author=db.query(Author).get(author_id)
     if author is None:
         raise HTTPException(status_code=404,detail='Author not found')
     return AuthorOut.from_orm(author)
 
-@router.patch('/api/authors/{author_id}',response_model=AuthorOut,status_code=200)
+@router.patch('/{author_id}',response_model=AuthorOut,dependencies=[Depends(require_roles(Role.admin,Role.user))],status_code=200)
 def update_author(author_id:int,payload:AuthorCreate,db:Session=Depends(get_db)):
     author=db.query(Author).get(author_id)
     if author is None:
@@ -56,7 +56,7 @@ def update_author(author_id:int,payload:AuthorCreate,db:Session=Depends(get_db))
     db.refresh(author)
     return AuthorOut.from_orm(author)
 
-@router.delete('/api/authors/{author_id}',status_code=204)
+@router.delete('/{author_id}',dependencies=[Depends(require_roles(Role.admin,Role.user))],status_code=204)
 def delete_author(author_id:int,db:Session=Depends(get_db)):
     author=db.query(Author).get(author_id)
     if author is None:

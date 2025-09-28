@@ -2,14 +2,14 @@ from fastapi import FastAPI, HTTPException, Query, Depends, APIRouter
 from typing import Optional,List
 from sqlalchemy.orm import Session
 
-from deps import get_db
+from deps import get_db, require_roles
 from helpers import paginate
-from models import Author, Book
+from models import Author, Book, Role
 from schemas import BookOut, BookCreate
 
 router=APIRouter(prefix="/api/books",tags=["books"])
 
-@router.post('/',response_model=BookOut,status_code=201)
+@router.post('/',response_model=BookOut,dependencies=[Depends(require_roles(Role.admin,Role.user))],status_code=201)
 def create_book(payload:BookCreate,db:Session=Depends(get_db)):
     if not db.query(Author).get(payload.author_id):
         raise HTTPException(status_code=404,detail='Author not found')

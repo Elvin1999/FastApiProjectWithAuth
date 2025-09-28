@@ -20,7 +20,7 @@ def register(payload:UserRegister,db:Session=Depends(get_db)):
     db.refresh(user)
     return user
 
-@router.get('/login',response_model=TokenOut,status_code=200)
+@router.post('/login',response_model=TokenOut,status_code=200)
 def login(payload:UserLogin,db:Session=Depends(get_db)):
     user=db.query(User).filter(User.email==payload.email).first()
     if not user or not verify_password(payload.password,user.password_hash) or not user.is_active:
