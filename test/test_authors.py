@@ -1,16 +1,22 @@
 from models import Role
 
-def test_authors_list(client):
-    r=client.get('/api/authors')
+
+def test_authors_list_public(client):
+    r = client.get("/api/authors")
     assert r.status_code == 200
 
-def test_create_author_requires_admin(client,normal_user):
-    #user login
-    token=client.post('/api/auth/login',json={
-        'email':'user@gmail.com',"password":"user123"
+
+def test_create_author_requires_admin(client, normal_user):
+    # user ile login
+    token = client.post('/api/auth/login', json={
+        "email": "normal@gmail.com",
+        "password": "normal123"
     }).json()['access_token']
 
-    r=client.post('/api/authors',json={"name":"Mark Twen"},
-                  headers={'Authorization':f'Bearer {token}'})
+    r = client.post(
+        '/api/authors',
+        json={"name": "Test Author"},
+        headers={"Authorization": f"Bearer {token}"}
+    )
 
-    assert r.status_code == 201
+    assert r.status_code == 403

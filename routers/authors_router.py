@@ -10,7 +10,7 @@ from schemas import BookOut, BookCreate, AuthorOut, AuthorCreate
 
 router=APIRouter(prefix="/api/authors",tags=["authors"])
 
-@router.post('/',response_model=AuthorOut,dependencies=[Depends(require_roles(Role.admin,Role.user))],status_code=201)
+@router.post('/',response_model=AuthorOut,dependencies=[Depends(require_roles(Role.admin))],status_code=201)
 def create_author(payload:AuthorCreate,db:Session=Depends(get_db)):
     if db.query(Author).filter_by(name=payload.name).first() is not None:
         raise HTTPException(status_code=400,detail='Author already exists')
